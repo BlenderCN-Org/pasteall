@@ -17,7 +17,7 @@
 # ##### END GPL LICENSE BLOCK #####
 
 bl_info = {
-    "name": "PasteAll",
+    "name": "PasteAll - Text",
     "author": "Dalai Felinto (dfelinto)",
     "version": (0, 7),
     "blender": (2, 60, 0),
@@ -59,7 +59,7 @@ class TEXT_PT_pasteall(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         layout.operator("text.pasteall", icon='URL')
-        layout.prop(context.scene, "use_webbrowser")
+        layout.prop(context.scene, "use_pasteall_webbrowser_text")
 
 
 class TEXT_OT_pasteall(bpy.types.Operator):
@@ -91,14 +91,14 @@ class TEXT_OT_pasteall(bpy.types.Operator):
         html = self.send_text(text, format)
 
         if html is None:
-            self.report({'ERROR'}, "Error in sending the text to the server.")
+            self.report({'ERROR'}, "Error in sending the text to the server")
             return {'CANCELLED'}
 
         # get the link of the posted page
         page = self.get_page(str(html))
 
         if page is None or page == "":
-            self.report({'ERROR'}, "Error in retrieving the page.")
+            self.report({'ERROR'}, "Error in retrieving the page")
             return {'CANCELLED'}
         else:
             self.report({'INFO'}, page)
@@ -106,11 +106,11 @@ class TEXT_OT_pasteall(bpy.types.Operator):
         # store the link in the clipboard
         bpy.context.window_manager.clipboard = page
 
-        if context.scene.use_webbrowser:
+        if context.scene.use_pasteall_webbrowser_text:
             try:
                 webbrowser.open_new_tab(page)
             except:
-                self.report({'WARNING'}, "Error in opening the page %s." % (page))
+                self.report({'WARNING'}, "Error in opening the page %s" % (page))
 
         return {'FINISHED'}
 
@@ -205,9 +205,9 @@ class TEXT_OT_pasteall(bpy.types.Operator):
 
 
 def register():
-    bpy.types.Scene.use_webbrowser = bpy.props.BoolProperty(
+    bpy.types.Scene.use_pasteall_webbrowser_text = bpy.props.BoolProperty(
         name='Launch Browser',
-        description='Opens the page with the submitted text.',
+        description='Opens the page with the submitted text',
         default=True)
 
     bpy.utils.register_class(TEXT_PT_pasteall)
@@ -215,7 +215,7 @@ def register():
 
 
 def unregister():
-    del bpy.types.Scene.use_webbrowser
+    del bpy.types.Scene.use_pasteall_webbrowser_text
     bpy.utils.unregister_class(TEXT_PT_pasteall)
     bpy.utils.unregister_class(TEXT_OT_pasteall)
 
