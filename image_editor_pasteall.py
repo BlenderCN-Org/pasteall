@@ -50,7 +50,6 @@ import urllib
 import urllib.request
 import webbrowser
 
-TODO = True
 
 class IMAGE_PT_pasteall(bpy.types.Panel):
     bl_space_type = 'IMAGE_EDITOR'
@@ -139,14 +138,36 @@ class IMAGE_OT_pasteall(bpy.types.Operator):
     def invoke(self, context, event):
         image = context.space_data.image
 
-        # 1. save image in a temporary place
+        # save image in a temporary place
         filepath = self._save_image(context, image)
 
-        # 2. upload image
-        self._upload_image(filepath)
+        # upload image and receive the returned page
+        html = self._upload_image(filepath)
 
-        # 3. remove image
+        # remove image
         self._remove_image(filepath)
+
+        if html is None:
+            self.report({'ERROR'}, "Error in sending the image to the server.")
+            return {'CANCELLED'}
+
+        # get the link of the posted page
+        page = self._get_page(str(html))
+
+        if page is None or page == "":
+            self.report({'ERROR'}, "Error in retrieving the page.")
+            return {'CANCELLED'}
+        else:
+            self.report({'INFO'}, page)
+
+        # store the link in the clipboard
+        bpy.context.window_manager.clipboard = page
+
+        if context.scene.use_pasteall_webbrowser_image:
+            try:
+                webbrowser.open_new_tab(page)
+            except:
+                self.report({'WARNING'}, "Error in opening the page %s." % (page))
 
         return {'FINISHED'}
 
@@ -174,77 +195,20 @@ class IMAGE_OT_pasteall(bpy.types.Operator):
     def _upload_image(self, filepath):
         """
         upload image to pasteall server
+        and return the returned page
         """
-        TODO
+        return None
 
     def _remove_image(self, filepath):
         """
         delete temporary image
         """
         import os
-        os.remote(filepath)
+        os.remove(filepath)
 
-        """
-        import webbrowser
-        st = context.space_data
-
-        # get the selected text
-        text = self.get_selected_text(st.text)
-        # if no text is selected send the whole file
-        if text is None: text = st.text.as_string()
-
-        # get the file type based on the extension
-        format = self.get_file_format(st.text)
-
-        # send the text and receive the returned page
-        html = self.send_text(text, format)
-
-        if html is None:
-            self.report({'ERROR'}, "Error in sending the text to the server.")
-            return {'CANCELLED'}
-
-        # get the link of the posted page
-        page = self.get_page(str(html))
-
-        if page is None or page == "":
-            self.report({'ERROR'}, "Error in retrieving the page.")
-            return {'CANCELLED'}
-        else:
-            self.report({'INFO'}, page)
-
-        # store the link in the clipboard
-        bpy.context.window_manager.clipboard = page
-
-        if context.scene.use_pasteall_webbrowser_image:
-            try:
-                webbrowser.open_new_tab(page)
-            except:
-                self.report({'WARNING'}, "Error in opening the page %s." % (page))
-
-        """
-        return {'FINISHED'}
-
-    def send_text(self, text, format):
+    def _get_page(self, html):
         """"""
-        import urllib
-        url = "http://www.pasteall.org/index.php"
-        values = {  'action' : 'savepaste',
-                    'parent_id' : '0',
-                    'language_id': format,
-                    'code' : text }
-
-        try:
-            data = urllib.parse.urlencode(values).encode()
-            req = urllib.request.Request(url, data)
-            response = urllib.request.urlopen(req)
-            page_source = response.read()
-        except:
-            return None
-        else:
-            return page_source
-
-    def get_page(self, html):
-        """"""
+        print(html)
         id = html.find('directlink')
         id_begin = id + 12 # hardcoded: directlink">
         id_end = html[id_begin:].find("</a>")
@@ -253,65 +217,6 @@ class IMAGE_OT_pasteall(bpy.types.Operator):
             return html[id_begin:id_begin + id_end]
         else:
             return None
-
-    def get_selected_text(self, text):
-        """"""
-        current_line = text.current_line
-        select_end_line = text.select_end_line
-
-        current_character = text.current_character
-        select_end_character = text.select_end_character
-
-        # if there is no selected text return None
-        if current_line == select_end_line:
-            if current_character == select_end_character:
-                return None
-            else:
-                return current_line.body[min(current_character,select_end_character):max(current_character,select_end_character)]
-
-        text_return = None
-        writing = False
-        normal_order = True # selection from top to bottom
-
-        for line in text.lines:
-            if not writing:
-                if line == current_line:
-                    text_return = current_line.body[current_character:] + "\n"
-                    writing = True
-                    continue
-                elif line == select_end_line:
-                    text_return =  select_end_line.body[select_end_character:] + "\n"
-                    writing = True
-                    normal_order = False
-                    continue
-            else:
-                if normal_order:
-                    if line == select_end_line:
-                        text_return += select_end_line.body[:select_end_character]
-                        break
-                    else:
-                        text_return += line.body + "\n"
-                        continue
-                else:
-                    if line == current_line:
-                        text_return += current_line.body[:current_character]
-                        break
-                    else:
-                        text_return += line.body + "\n"
-                        continue
-
-        return text_return
-
-    def get_file_format(self, text):
-        """Try to guess what is the format based on the file extension"""
-        extensions =   {'diff':'24',
-                        'patch':'24',
-                        'py':'62',
-                        'c':'12',
-                        'cpp':'18'}
-
-        type = text.name.split(".")[-1]
-        return extensions.get(type, '0')
 
 
 def register():
