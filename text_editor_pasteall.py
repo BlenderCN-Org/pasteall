@@ -61,6 +61,7 @@ class TEXT_PT_pasteall(bpy.types.Panel):
         layout.operator("text.pasteall", icon='URL')
         layout.prop(context.scene, "use_webbrowser")
 
+
 class TEXT_OT_pasteall(bpy.types.Operator):
     """"""
     bl_idname = "text.pasteall"
@@ -202,6 +203,7 @@ class TEXT_OT_pasteall(bpy.types.Operator):
         type = text.name.split(".")[-1]
         return extensions.get(type, '0')
 
+
 def register():
     bpy.types.Scene.use_webbrowser = bpy.props.BoolProperty(
         name='Launch Browser',
@@ -210,9 +212,11 @@ def register():
 
     bpy.utils.register_module(__name__)
 
+
 def unregister():
     del bpy.types.Scene.use_webbrowser
     bpy.utils.unregister_module(__name__)
+
 
 if __name__ == "__main__":
     register()
