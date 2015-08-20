@@ -197,6 +197,11 @@ class IMAGE_OT_pasteall(bpy.types.Operator):
         upload image to pasteall server
         and return the returned page
         """
+
+        """
+        TODO: figure out how to send the image from filepath to
+        pasteall.org server
+        """
         return None
 
     def _remove_image(self, filepath):
@@ -208,7 +213,6 @@ class IMAGE_OT_pasteall(bpy.types.Operator):
 
     def _get_page(self, html):
         """"""
-        print(html)
         id = html.find('directlink')
         id_begin = id + 12 # hardcoded: directlink">
         id_end = html[id_begin:].find("</a>")
