@@ -50,6 +50,8 @@ import urllib
 import urllib.request
 import webbrowser
 
+TODO = True
+
 class IMAGE_PT_pasteall(bpy.types.Panel):
     bl_space_type = 'IMAGE_EDITOR'
     bl_region_type = 'UI'
@@ -59,6 +61,65 @@ class IMAGE_PT_pasteall(bpy.types.Panel):
         layout = self.layout
         layout.operator("image.pasteall", icon='URL')
         layout.prop(context.scene, "use_pasteall_webbrowser_image")
+
+
+class ImageSettings:
+    __slots__ = {
+            "_data",
+            "_image",
+            "_scene",
+            }
+
+    def __init__(self, scene, image):
+        self._scene = scene
+        self._image = image
+        self._data = {}
+
+        self._store()
+        self._change_settings()
+
+    def _store(self):
+        """
+        store all the scene render settings
+        """
+        values = {
+                "color_depth",
+                "color_mode",
+                "compression",
+                "file_format",
+                "quality",
+                "views_format",
+                }
+
+        image_settings = self._scene.render.image_settings
+        for name in values:
+            exec("self._data[\"{0}\"] = image_settings.{0}".format(name))
+
+
+    def _change_settings(self):
+        """
+        set the saving properties
+        """
+        image_settings = self._scene.render.image_settings
+        use_alpha = self._image.use_alpha
+
+        image_settings.color_depth = '8'
+        image_settings.color_mode = 'RGBA' if use_alpha else 'RGB'
+        image_settings.compression = 80
+        image_settings.file_format = 'PNG' if use_alpha else 'JPG'
+        image_settings.quality = 70
+        image_settings.views_format = 'STEREO_3D'
+
+    def __del__(self):
+        """
+        restore all the settings
+        """
+        image_settings = self._scene.render.image_settings
+        for key, value in self._data.items():
+            if type(value) == str:
+                exec("image_settings.{0} = \"{1}\"".format(key, value))
+            else:
+                exec("image_settings.{0} = {1}".format(key, value))
 
 
 class IMAGE_OT_pasteall(bpy.types.Operator):
@@ -72,9 +133,57 @@ class IMAGE_OT_pasteall(bpy.types.Operator):
         if context.area.type != 'IMAGE_EDITOR':
             return False
         else:
-            return context.space_data.image != None
+            return context.space_data.image != None and \
+                    context.space_data.image.has_data
 
     def invoke(self, context, event):
+        image = context.space_data.image
+
+        # 1. save image in a temporary place
+        filepath = self._save_image(context, image)
+
+        # 2. upload image
+        self._upload_image(filepath)
+
+        # 3. remove image
+        self._remove_image(filepath)
+
+        return {'FINISHED'}
+
+    def _save_image(self, context, image):
+        """
+        save image in a temporary place
+        """
+        import tempfile
+        import os
+
+        image_settings = ImageSettings(context.scene, image)
+        use_alpha = image.use_alpha
+
+        dirpath = tempfile.gettempdir()
+        filepath = os.path.join(dirpath, "pasteall.{0}".format("png" if use_alpha else "jpg"))
+
+        # save the image
+        image.save_render(filepath)
+
+        # restore scene original settings
+        del image_settings
+
+        return filepath
+
+    def _upload_image(self, filepath):
+        """
+        upload image to pasteall server
+        """
+        TODO
+
+    def _remove_image(self, filepath):
+        """
+        delete temporary image
+        """
+        import os
+        os.remote(filepath)
+
         """
         import webbrowser
         st = context.space_data
