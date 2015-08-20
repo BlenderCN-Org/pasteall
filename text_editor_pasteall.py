@@ -28,16 +28,16 @@ bl_info = {
     "tracker_url": "https://developer.blender.org/T23493",
     "category": "Text Editor"}
 
+
 # ########################################################
 # PasteAll.org Text Sender Script
 #
-# Dalai Felinto (dfelinto)
-# blenderecia.orgfree.com
+# Dalai Felinto
+# ----------------
+# dalaifelinto.com
+# @dfelinto
 #
-# Rio de Janeiro - Brasil
-# Vancouver - Canada
-#
-# Original code: 23rd August 2010 (Blender 2.5.3 rev. 31525)
+# Rio de Janeiro, Brasil
 #
 # Important Note:
 # This script is not official. I did it for fun and for my own usage.
@@ -210,12 +210,14 @@ def register():
         description='Opens the page with the submitted text.',
         default=True)
 
-    bpy.utils.register_module(__name__)
+    bpy.utils.register_class(TEXT_PT_pasteall)
+    bpy.utils.register_class(TEXT_OT_pasteall)
 
 
 def unregister():
     del bpy.types.Scene.use_webbrowser
-    bpy.utils.unregister_module(__name__)
+    bpy.utils.unregister_class(TEXT_PT_pasteall)
+    bpy.utils.unregister_class(TEXT_OT_pasteall)
 
 
 if __name__ == "__main__":
